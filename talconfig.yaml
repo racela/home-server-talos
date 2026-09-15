@@ -1,0 +1,115 @@
+clusterName: home-server
+talosVersion: v1.11.5
+kubernetesVersion: v1.33.0
+endpoint: https://192.168.1.120:6443
+
+clusterPodNets:
+  - 10.244.0.0/16
+clusterSvcNets:
+  - 10.96.0.0/12
+
+cniConfig:
+  name: custom
+  urls:
+    - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+
+allowSchedulingOnMasters: true
+
+patches:
+  - "@./patches/common.yaml"
+  - "@./patches/kubelet.yaml"
+  - "@./patches/longhorn-image.yaml"
+
+nodes:
+  - hostname: talos-01
+    ipAddress: 192.168.1.121
+    controlPlane: true
+    installDisk: /dev/sda
+    nameservers:
+      - 192.168.1.1
+      - 8.8.4.4
+      - 8.8.8.8
+      - 1.1.1.1
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - 192.168.1.121/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+        vip:
+          ip: 192.168.1.120
+    patches:
+      - |-
+        machine:
+          network:
+            extraHostEntries:
+              - ip: 192.168.1.122
+                aliases:
+                  - talos-02
+              - ip: 192.168.1.123
+                aliases:
+                  - talos-03
+
+  - hostname: talos-02
+    ipAddress: 192.168.1.122
+    controlPlane: true
+    installDisk: /dev/sda
+    nameservers:
+      - 192.168.1.1
+      - 8.8.4.4
+      - 8.8.8.8
+      - 1.1.1.1
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - 192.168.1.122/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+        vip:
+          ip: 192.168.1.120
+    patches:
+      - |-
+        machine:
+          network:
+            extraHostEntries:
+              - ip: 192.168.1.121
+                aliases:
+                  - talos-01
+              - ip: 192.168.1.123
+                aliases:
+                  - talos-03
+
+  - hostname: talos-03
+    ipAddress: 192.168.1.123
+    controlPlane: true
+    installDisk: /dev/sda
+    nameservers:
+      - 192.168.1.1
+      - 8.8.4.4
+      - 8.8.8.8
+      - 1.1.1.1
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - 192.168.1.123/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.1.1
+        vip:
+          ip: 192.168.1.120
+    patches:
+      - |-
+        machine:
+          network:
+            extraHostEntries:
+              - ip: 192.168.1.121
+                aliases:
+                  - talos-01
+              - ip: 192.168.1.122
+                aliases:
+                  - talos-02

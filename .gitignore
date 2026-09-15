@@ -1,0 +1,12 @@
+clusterconfig/
+*.key
+age.key
+
+# Legacy plaintext machine-config dumps (contain full cluster PKI in
+# plaintext) - superseded by talconfig.yaml + talsecret.yaml (encrypted).
+# Not committed here on purpose; delete locally once you've verified
+# the migration and no longer need them for reference.
+talos-01.yaml
+talos-02.yaml
+talos-03.yaml
+talos-03-test.yaml

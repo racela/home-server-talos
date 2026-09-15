@@ -1,0 +1,16 @@
+machine:
+  kubelet:
+    extraArgs:
+      image-gc-high-threshold: "74"
+      image-gc-low-threshold: "70"
+      rotate-server-certificates: "true"
+    extraMounts:
+      - destination: /var/lib/longhorn
+        type: bind
+        source: /var/lib/longhorn
+        options:
+          - bind
+          - rshared
+          - rw
+    defaultRuntimeSeccompProfileEnabled: true
+    disableManifestsDirectory: true
