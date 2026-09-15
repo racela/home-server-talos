@@ -11,7 +11,7 @@ clusterSvcNets:
 cniConfig:
   name: custom
   urls:
-    - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+    - https://raw.githubusercontent.com/projectcalico/calico/v3.31.0/manifests/canal.yaml
 
 allowSchedulingOnMasters: true
 
