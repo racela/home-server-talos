@@ -1,4 +1,5 @@
 clusterconfig/
+.local-snapshots/
 *.key
 age.key
 
