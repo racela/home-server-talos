@@ -66,8 +66,14 @@ resource "proxmox_virtual_environment_container" "nfs_share" {
   }
 
   operating_system {
-    type             = "debian"
-    template_file_id = "" # TODO: resolve against actual `terraform plan`/import output - this container predates Terraform tracking and pct config shows no discoverable template reference
+    type = "debian"
+    # Debian 12.7 confirmed via `pct exec 103 -- cat /etc/debian_version`;
+    # this exact template was verified end-to-end on a throwaway container
+    # (same `features: mount=nfs,nesting=1`) to actually produce a working
+    # NFS server via ../ansible/nfs-server/playbook.yml - not a guess. This
+    # field is under lifecycle.ignore_changes below, so it's documentation
+    # for a real rebuild, not something Terraform enforces on live state.
+    template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
   }
 
   lifecycle {

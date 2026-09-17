@@ -1,0 +1,47 @@
+---
+# Reproduces the NFS LXC container's OS-level state (packages + exports) -
+# the part Terraform structurally can't reach, since it only manages the
+# container's Proxmox-level shape (CPU/memory/disk/network/mount), never
+# what's installed inside it. Captured from the live container (Debian
+# 12.7, ID 103) on 2026-09-17 via `pct exec 103 -- ...`.
+- name: Configure NFS server for cluster storage share
+  hosts: nfs_server
+  become: true
+  vars:
+    nfs_export_path: /mnt/data
+    nfs_export_options: "192.168.1.0/24(rw,sync,no_root_squash)"
+
+  tasks:
+    - name: Install NFS server packages
+      ansible.builtin.apt:
+        name: nfs-kernel-server
+        state: present
+        update_cache: true
+
+    - name: Ensure export path exists
+      ansible.builtin.file:
+        path: "{{ nfs_export_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Configure /etc/exports
+      ansible.builtin.copy:
+        dest: /etc/exports
+        content: |
+          # Managed by ansible/nfs-server/playbook.yml in home-server-talos
+          {{ nfs_export_path }} {{ nfs_export_options }}
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload exports
+
+    - name: Ensure nfs-kernel-server is enabled and running
+      ansible.builtin.systemd:
+        name: nfs-kernel-server
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Reload exports
+      ansible.builtin.command: exportfs -ra
+      changed_when: true
