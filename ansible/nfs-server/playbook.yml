@@ -18,6 +18,10 @@
         state: present
         update_cache: true
 
+    # root:root/0755 confirmed against the live container (`stat /mnt/data`,
+    # 2026-09-17) - some NFS guides suggest nobody:nogroup + 0777 instead,
+    # but that's not what's actually running; no_root_squash in the export
+    # below is what actually makes root-owned files writable by clients.
     - name: Ensure export path exists
       ansible.builtin.file:
         path: "{{ nfs_export_path }}"
