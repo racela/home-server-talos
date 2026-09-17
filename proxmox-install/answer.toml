@@ -1,0 +1,62 @@
+# Proxmox VE automated-install answer file. Prepared once against a
+# generic ISO (see ../PROXMOX-BOOTSTRAP.md), kept external to that ISO
+# (USB partition or HTTP fetch) so this file can be edited/regenerated
+# without ever re-baking the ISO itself.
+#
+# BEFORE USING THIS FILE, fill in the two placeholders below - neither
+# should ever be a real secret sitting in git:
+#   - root-password-hashed: generate with `mkpasswd -m sha-512` on any
+#     Linux box, paste the hash output here (never the plaintext).
+#   - root-ssh-keys: optional, your own public key(s) for convenience.
+#
+# Captured from the live host on 2026-09-17. `country`/`timezone` assume
+# the host physically stays in the Philippines - change if it moves.
+
+[global]
+keyboard = "en-us"
+country = "ph"
+fqdn = "proxmox"
+timezone = "Asia/Manila"
+root-password-hashed = "REPLACE_WITH_OUTPUT_OF: mkpasswd -m sha-512"
+root-ssh-keys = [
+  # "ssh-ed25519 AAAA... you@yourmachine",
+]
+reboot-on-error = false
+
+[network]
+source = "from-answer"
+cidr = "192.168.1.110/24"
+gateway = "192.168.1.1"
+# DNS at install time can't depend on anything running on this cluster
+# (chicken-and-egg - the cluster isn't up yet). Using the router itself;
+# swap for a public resolver (e.g. 1.1.1.1) if it doesn't relay DNS.
+dns = "192.168.1.1"
+
+[network.filter]
+# Pins to this exact physical NIC (matches /etc/network/interfaces on
+# the live host) rather than trusting default interface-naming to land
+# on the right one - same physical hardware, so this should stay stable
+# across a reinstall.
+ID_NET_NAME = "enp5s0"
+
+[disk-setup]
+filesystem = "lvm"
+# CRITICAL: without this, the installer could target either disk on this
+# host - including the 7.3TB ZFS data disk (`sda`) that must never be
+# touched by the OS installer. Confirmed via `lsblk` that the actual boot
+# disk is the 238.5GB NVMe drive.
+disk-list = ["nvme0n1"]
+# swapsize/maxroot/maxvz/minfree deliberately left unset - defaults
+# produced a reasonable split last time (69.4G root, 8G swap, rest as
+# thin-provisioned data) and exact parity isn't load-bearing, unlike the
+# ZFS pool's ashift/compression (see PROXMOX-BOOTSTRAP.md).
+
+[first-boot]
+# Only creates the ZFS data pool - self-contained, no secrets, safe to
+# run fully unattended. Deliberately does NOT run the terraform-bot
+# bootstrap (bootstrap-proxmox-user.sh): that script prints a token
+# secret that needs a human to actually see and save it, so it stays a
+# separate manual step run right after first boot instead - see
+# ../PROXMOX-BOOTSTRAP.md.
+source = "from-iso"
+ordering = "fully-up"

@@ -98,7 +98,7 @@ is for when the VMs themselves are gone and need to be recreated (see
 itself is gone too).
 
 1. Create the 3 blank VMs via Terraform (with the `import {}` blocks
-   removed - see `PROXMOX-BOOTSTRAP.md` step 5). They boot into Talos
+   removed - see `PROXMOX-BOOTSTRAP.md` step 3). They boot into Talos
    maintenance mode from the attached ISO.
 2. `talhelper genconfig` + `apply-config` to each of the 3 nodes, exactly
    as in "Making a change" below - this installs Talos to disk and
