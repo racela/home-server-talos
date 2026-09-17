@@ -1,8 +1,8 @@
 #!/bin/sh
 # Runs automatically on first boot after an automated Proxmox install
 # (see answer.toml's [first-boot] section). Self-contained and secret-free
-# by design - only creates the ZFS data pool, nothing that needs a human
-# to capture a printed credential. The terraform-bot bootstrap
+# by design - creates the ZFS data pool and fixes NTP, nothing that needs
+# a human to capture a printed credential. The terraform-bot bootstrap
 # (bootstrap-proxmox-user.sh, ../terraform/) stays a separate manual step
 # for exactly that reason - see ../PROXMOX-BOOTSTRAP.md.
 #
@@ -12,6 +12,20 @@
 # atime/recordsize/mountpoint which are plain ZFS defaults here.
 
 set -eu
+
+# A static IP means no DHCP-provided NTP source anymore - this bit Rafa
+# for real during the original install (system clock drifted silently
+# until fixed by hand). Idempotent: only appends if not already present,
+# safe if this script is ever re-run.
+CHRONY_CONF="/etc/chrony/chrony.conf"
+if ! grep -q "time.cloudflare.com" "$CHRONY_CONF" 2>/dev/null; then
+    cat >> "$CHRONY_CONF" <<'EOF'
+pool pool.ntp.org iburst
+server time.google.com iburst
+server time.cloudflare.com iburst
+EOF
+    systemctl restart chrony
+fi
 
 # This assumes the SAME physical ZFS disk survives and is being attached
 # to freshly-installed Proxmox (e.g. motherboard died, disk didn't). If

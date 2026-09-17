@@ -10,12 +10,31 @@ host on 2026-09-17, not assumed.
 ## 1. Install Proxmox VE (automated)
 
 `proxmox-install/` in this repo has everything needed for an unattended
-install: `answer.toml` (network config, disk targeting) and
-`first-boot-zfs.sh` (creates the ZFS pool automatically on first boot -
-see its own header for why it deliberately does NOT also run the
-terraform-bot bootstrap). Fill in `answer.toml`'s two placeholders first
+install: `answer.toml` (network config, disk targeting) and `first-boot.sh`
+(creates the ZFS pool and fixes NTP automatically on first boot - see its
+own header for why it deliberately does NOT also run the terraform-bot
+bootstrap). Fill in `answer.toml`'s two placeholders first
 (`root-password-hashed` via `mkpasswd -m sha-512`, optionally
 `root-ssh-keys`) - never real secrets committed to git.
+
+**Two real problems hit during the original install, both now handled
+here rather than left to bite again:**
+- **NTP**: a static IP means no DHCP-provided NTP source, and the system
+  clock silently drifted until fixed by hand originally. `first-boot.sh`
+  adds `pool.ntp.org`/`time.google.com`/`time.cloudflare.com` to
+  `chrony.conf` and restarts it - no manual step needed this time.
+- **Static IP conflict**: `192.168.1.110` was originally assigned without
+  checking it wasn't already handed out by the router's DHCP, causing
+  intermittent unreachability. `answer.toml` reuses this exact
+  already-verified-working address rather than picking a new one, so
+  this specific mistake can't repeat - but if the network layout ever
+  changes, double-check the router's DHCP reservations before reusing
+  this IP.
+
+Also worth knowing, not a problem to fix: Proxmox's summary view can show
+misleadingly high RAM usage (e.g. ~90% when real usage is closer to 40%)
+- this is ZFS's ARC cache being counted as "used," not a leak or
+misconfiguration.
 
 On any Linux machine with `proxmox-auto-install-assistant` installed
 (`apt install proxmox-auto-install-assistant`, or download a current
@@ -27,7 +46,7 @@ proxmox-auto-install-assistant validate-answer proxmox-install/answer.toml
 proxmox-auto-install-assistant prepare-iso /path/to/proxmox-ve_8.x.iso \
   --fetch-from iso \
   --answer-file proxmox-install/answer.toml \
-  --on-first-boot proxmox-install/first-boot-zfs.sh
+  --on-first-boot proxmox-install/first-boot.sh
 ```
 
 Flash the resulting ISO to a USB drive, boot the target hardware from
