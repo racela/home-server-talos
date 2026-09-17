@@ -89,6 +89,32 @@ cp /tmp/age/age /tmp/age/age-keygen ~/.local/bin/
 chmod +x ~/.local/bin/*
 ```
 
+## Bootstrapping a cluster from scratch
+
+Different from the recovery flow above, which assumes the 3 nodes are
+already running and you've just lost your admin credential. This section
+is for when the VMs themselves are gone and need to be recreated (see
+`terraform/` in this repo, and `PROXMOX-BOOTSTRAP.md` if the Proxmox host
+itself is gone too).
+
+1. Create the 3 blank VMs via Terraform (with the `import {}` blocks
+   removed - see `PROXMOX-BOOTSTRAP.md` step 5). They boot into Talos
+   maintenance mode from the attached ISO.
+2. `talhelper genconfig` + `apply-config` to each of the 3 nodes, exactly
+   as in "Making a change" below - this installs Talos to disk and
+   applies this repo's existing machine config (same cluster PKI,
+   `talsecret.yaml` already has it) to each node.
+3. **One-time only, against exactly one node** - form etcd from nothing:
+   ```sh
+   talosctl -n 192.168.1.121 bootstrap
+   ```
+   Never run this against more than one node, and never run it again
+   once the cluster already has quorum - it's cluster genesis, not a
+   routine operation. This step doesn't apply to the "recovering access"
+   flow above, since that cluster's etcd is already running.
+4. Continue with the "Authenticating to the cluster" steps above (merge
+   the generated `talosconfig`, verify, generate a kubeconfig).
+
 ## Making a change
 
 1. Edit `talconfig.yaml` / `patches/*.yaml` as needed.
