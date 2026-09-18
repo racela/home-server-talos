@@ -1,3 +1,12 @@
 machine:
   install:
-    image: factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5
+    # Schematic changed from 613e1592... (Talos <=1.11) to include
+    # extraKernelArgs directly - Talos 1.13 defaults to
+    # grubUseUKICmdline: true (boots from a Unified Kernel Image), which
+    # can't be combined with the old install.extraKernelArgs mechanism.
+    # net.ifnames=0 (needed since every node in talconfig.yaml references
+    # the interface as "eth0") now has to be baked into the image itself
+    # via Image Factory instead. New schematic verified against Image
+    # Factory before use - same 2 extensions, same kernel arg, just
+    # expressed the way this Talos version actually wants it.
+    image: factory.talos.dev/installer/b1ba84be4f5193a24085cc7e22fce31105e1583504d7d5aef494318f7cb1abd0:v1.13.10
