@@ -1,3 +1,16 @@
 .terraform/
+
+# Local state, backups, and saved plans can contain plaintext secrets.
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+tfplan
+plan.out
+
+# Terraform inputs may contain credentials.
 *.tfvars
+*.tfvars.json
+
 crash.log
+crash.*.log
